@@ -31,15 +31,27 @@ class Transformer extends Component {
 
         const cos = Math.cos(this.props.rotation);
         const sin = Math.sin(this.props.rotation);
-        const xPos = e.pageX - box.left + body.scrollLeft - body.clientLeft;
-        const yPos = e.pageY - box.top + body.scrollTop - body.clientTop;
+
+        const boxCenter = {
+            x: box.width / 2,
+            y: box.height / 2
+        };
+
+        const rotationDiff = {
+            x: box.left * cos + box.top * sin,
+            y: -box.left * sin + box.top * cos
+        };
+
+        const relPosition = {
+            x: e.pageX - rotationDiff.x - body.scrollLeft - body.clientLeft,
+            y: e.pageY - rotationDiff.y - body.scrollTop - body.clientTop
+        };
+
 
         this.setState({
-            dragStartPosition: {
-                x: xPos * cos - yPos * sin,
-                y: xPos * sin + yPos * cos
-            }
-          });
+            dragStartPosition: relPosition
+        });
+
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mouseup', this.onMouseUp);
         e.preventDefault();
