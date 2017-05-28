@@ -16,7 +16,7 @@ class StateInitializer {
     }
 
     getRandomRotation() {
-        return  Math.random() * 6.28319;
+        return  Math.random() * Math.PI * 2;
     }
 
     createState() {
@@ -31,9 +31,6 @@ class StateInitializer {
                 activeId: 'img-0'
             }));
     }
-
 }
-
-
 
 export default StateInitializer;

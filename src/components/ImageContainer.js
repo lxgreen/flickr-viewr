@@ -1,20 +1,62 @@
-import {connect} from 'react-redux';
+import React, { Component } from 'react';
 import {PropTypes} from 'prop-types';
 import ImageTile from './ImageTile';
+import {saveState} from '../statePersistence';
 
-const mapStateToProps = (image) => {
-    console.log(image);
-    return {
-        url: image.url,
-        location: image.location,
-        rotation: image.rotation,
-        isActive: image.isActive
-    };
-};
+class ImageContainer extends Component {
 
-const mapDispatchToProps = () => {};
+    componentWillMount() {
+        const {store} = this.context;
+        this.unsubscribe = store.subscribe(() => {
+            saveState(store.getState());
+            this.forceUpdate();
+        });
+    }
 
+    componentWillUnmount() {
+        this.unsubscribe();
+    }
 
-const ImageConatiner = connect(mapStateToProps, mapDispatchToProps)(ImageTile);
+    render() {
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-export default ImageConatiner;
+        const {store} = this.context;
+        const {images, activeId} = store.getState();
+
+        return (
+            <div>
+              { images.map(image => this.renderTile(image, activeId, store.dispatch)) }
+            </div>
+        );
+    }
+
+    renderTile(image, activeId, dispatch) {
+        return (
+            <ImageTile
+                key={image.id}
+                url={image.url}
+                location={image.location}
+                rotation={image.rotation}
+                imageId={image.id}
+                isActive={image.id === activeId}
+
+                onLoad={() => {}}
+
+                onError={() => {}}
+
+                onRotateStop={(e) => dispatch({ type: 'ROTATED', id: e.id, rotation: e.rotation })}
+
+                onDragStop={(e) => dispatch({type: 'DRAGGED', id: e.id, location: e.location })}
+
+                onMouseDown={(id) => {
+                    if(activeId !== id) {
+                        dispatch({type: 'ACTIVATED', id: id});
+                    }
+                }}/>
+        );
+    }
+}
+
+ImageContainer.contextTypes = { store: PropTypes.object };
+
+export default ImageContainer;

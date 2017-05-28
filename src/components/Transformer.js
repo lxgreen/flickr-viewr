@@ -9,7 +9,11 @@ class Transformer extends Component {
         this.state = {
             position: this.props.defaultPosition,
             rotation: this.props.defaultRotation,
-            isRotating: false,
+            startAngle: this.props.defaultRotation,
+            center: {
+                x: 0,
+                y: 0
+            },
             dragStartPosition: {
                 x: 0,
                 y: 0
@@ -21,73 +25,135 @@ class Transformer extends Component {
         e.preventDefault();
     };
 
-    onMouseDown = (e) => {
-        if (e.button !== 0) return;
-        this.props.onMouseDown(e);
-
-        const ref = ReactDOM.findDOMNode(this);
-        const body = document.body;
-        const box = ref.getBoundingClientRect();
-
-        const cos = Math.cos(this.props.rotation);
-        const sin = Math.sin(this.props.rotation);
-
-        const boxCenter = {
-            x: box.width / 2,
-            y: box.height / 2
-        };
-
-        const rotationDiff = {
-            x: box.left * cos + box.top * sin,
-            y: -box.left * sin + box.top * cos
-        };
-
-        const relPosition = {
-            x: e.pageX - rotationDiff.x - body.scrollLeft - body.clientLeft,
-            y: e.pageY - rotationDiff.y - body.scrollTop - body.clientTop
-        };
-
-
-        this.setState({
-            dragStartPosition: relPosition
-        });
-
-        document.addEventListener('mousemove', this.onMouseMove);
-        document.addEventListener('mouseup', this.onMouseUp);
+    onContextMenu = (e) => {
         e.preventDefault();
     };
 
-    onMouseMove = (e) => {
+    onMouseDown = (e) => {
+
+        const BUTTONS = {
+            LEFT: 0,
+            RIGHT: 2
+        };
+
+        this.props.onMouseDown(this.props.imageId);
+
+        switch(e.button) {
+        case BUTTONS.LEFT:
+            this.handleStartDrag(e);
+        break;
+
+        case BUTTONS.RIGHT:
+            this.handleStartRotate(e);
+        break;
+
+        default:
+            break;
+        }
+
+        return e.preventDefault();
+    };
+
+    handleStartDrag = (e) => {
+        this.setState({
+            dragStartPosition: {
+                x: e.pageX - this.state.position.x,
+                y: e.pageY - this.state.position.y
+            }
+        });
+
+        e.target.addEventListener('mousemove', this.onDrag);
+        e.target.addEventListener('mouseup', this.onDragStop);
+        e.target.addEventListener('mouseleave', this.onDragStop);
+        e.preventDefault();
+    };
+
+    handleStartRotate = (e) => {
+
+        const ref = ReactDOM.findDOMNode(this);
+        const box = ref.getBoundingClientRect();
+        const {top, left, height, width} = box;
+
+        const center = {
+            x: left + (width / 2),
+            y: top + (height / 2)
+        };
+
+        const x = e.clientX - center.x;
+        const y = e.clientY - center.y;
+
+        this.setState({
+            center: center,
+            startAngle: Math.atan2(y,x)
+        });
+
+        e.target.addEventListener('mousemove', this.onRotate);
+        e.target.addEventListener('mouseup', this.onRotateStop);
+        e.target.addEventListener('mouseleave', this.onRotateStop);
+        e.preventDefault();
+    };
+
+    onRotate = (e) => {
+        const x = e.clientX - this.state.center.x;
+        const y = e.clientY - this.state.center.y;
+        const delta = Math.atan2(y, x);
+
+        this.setState({
+            rotation: this.state.rotation + (delta - this.state.startAngle)/8
+        });
+
+        e.preventDefault();
+    };
+
+    onRotateStop = (e) => {
+        if (this.state.rotation !== this.props.defaultRotation) {
+            this.props.onRotateStop({
+                rotation: this.state.rotation,
+                id: this.props.imageId
+            });
+        }
+
+        e.target.removeEventListener('mousemove', this.onRotate);
+        e.target.removeEventListener('mouseup', this.onRotateStop);
+        e.target.removeEventListener('mouseup', this.onRotateStop);
+        e.preventDefault();
+    };
+
+    onDrag = (e) => {
         this.setState({
             position: {
                 x: e.pageX - this.state.dragStartPosition.x,
                 y: e.pageY - this.state.dragStartPosition.y
             }
         });
+        e.preventDefault();
     };
 
-    onMouseUp = (e) => {
+    onDragStop = (e) => {
         if (this.state.position.x !== this.props.defaultPosition.x ||
             this.state.position.y !== this.props.defaultPosition.y) {
-                this.props.onMouseUp(this.state.position);
+                this.props.onDragStop({
+                    location: this.state.position,
+                    id: this.props.imageId
+                });
         }
 
-        document.removeEventListener('mousemove', this.onMouseMove);
-        document.removeEventListener('mouseup', this.onMouseUp);
+        e.target.removeEventListener('mousemove', this.onDrag);
+        e.target.removeEventListener('mouseup', this.onDragStop);
+        e.target.removeEventListener('mouseleave', this.onDragStop);
         e.preventDefault();
     };
 
     render() {
-
         const dragRotateStyle = {
             transform: `translate3d(${this.state.position.x}px, ${this.state.position.y}px, 0) rotateZ(${this.state.rotation}rad)`
         };
 
         return React.cloneElement(React.Children.only(this.props.children), {
             style: dragRotateStyle,
-            onDragStart: this.onDragStart,
             onMouseDown: this.onMouseDown,
-            onMouseUp: this.onMouseUp
+            onDragStart: this.onDragStart,
+            onContextMenu: this.onContextMenu
         });
     }
 }
@@ -96,7 +162,8 @@ Transformer.defaultProps = {
     position: {x: 0, y: 0},
     rotation: 0,
     onMouseDown: () => {},
-    onMouseUp: () => {}
+    onDragStop: () => {},
+    onRotateStop: () => {}
 };
 
 export default Transformer;

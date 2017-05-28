@@ -8,17 +8,21 @@ const ImageTile = ({
     url,
     location,
     rotation,
+    imageId,
     onLoad,
     onError,
     onDragStop,
     onMouseDown,
+    onRotateStop,
     isActive}) => (
     <Transformer
-        defaultPosition={{x: location.x, y: location.y}}
+        imageId={imageId}
+        defaultPosition={location}
         defaultRotation={rotation}
-        onMouseUp={onDragStop}
-        onMouseDown={onMouseDown}>
-        <img className={classNames({'image-tile': true, 'active': isActive === true})}
+        onDragStop={onDragStop}
+        onMouseDown={onMouseDown}
+        onRotateStop={onRotateStop}>
+        <img className={classNames({'image-tile': true, 'active': isActive})}
             src={url}
             onLoad={onLoad}
             onError={onError} />
