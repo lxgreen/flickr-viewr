@@ -1,0 +1,11 @@
+.image-tile {
+    position: absolute;
+    border: 5px solid wheat;
+    filter: grayscale(1);
+
+}
+
+.image-tile.active {
+    z-index: 50;
+    filter: none;
+}
