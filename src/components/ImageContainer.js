@@ -1,28 +1,12 @@
 import React, { Component } from 'react';
 import {PropTypes} from 'prop-types';
 import ImageTile from './ImageTile';
-import {saveState} from '../statePersistence';
 
 class ImageContainer extends Component {
 
-    componentWillMount() {
-        const {store} = this.context;
-        this.unsubscribe = store.subscribe(() => {
-            saveState(store.getState());
-            this.forceUpdate();
-        });
-    }
-
-    componentWillUnmount() {
-        this.unsubscribe();
-    }
-
     render() {
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-
         const {store} = this.context;
         const {images, activeId} = store.getState();
-
         return (
             <div>
               { images.map(image => this.renderTile(image, activeId, store.dispatch)) }
@@ -40,9 +24,9 @@ class ImageContainer extends Component {
                 imageId={image.id}
                 isActive={image.id === activeId}
 
-                onLoad={() => {}}
+                onLoad={() => dispatch({type: 'IMAGE_LOADED'})}
 
-                onError={() => {}}
+                onError={() => dispatch({type: 'IMAGE_ERROR', id: image.id})}
 
                 onRotateStop={(e) => dispatch({ type: 'ROTATED', id: e.id, rotation: e.rotation })}
 

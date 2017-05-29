@@ -28,7 +28,8 @@ class StateInitializer {
                     rotation: this.getRandomRotation(),
                     id: _.uniqueId('img-')
                 })),
-                activeId: 'img-0'
+                activeId: 'img-0',
+                imagesToResolve: urls.length
             }));
     }
 }

@@ -1,8 +1,9 @@
 .image-tile {
     position: absolute;
-    border: 5px solid wheat;
+    border: 5px solid lightgray;
     filter: grayscale(1);
-
+    box-shadow: 1px 1px 5px 4px rgba(0, 0, 0, 0.3);
+    cursor: grab;
 }
 
 .image-tile.active {

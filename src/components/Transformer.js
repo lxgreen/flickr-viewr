@@ -9,7 +9,7 @@ class Transformer extends Component {
         this.state = {
             position: this.props.defaultPosition,
             rotation: this.props.defaultRotation,
-            startAngle: this.props.defaultRotation,
+            initialAngle: 0,
             center: {
                 x: 0,
                 y: 0
@@ -36,8 +36,10 @@ class Transformer extends Component {
             RIGHT: 2
         };
 
+        // external mouse down
         this.props.onMouseDown(this.props.imageId);
 
+        // dispatch buttons: left for dragging, right for rotation
         switch(e.button) {
         case BUTTONS.LEFT:
             this.handleStartDrag(e);
@@ -54,37 +56,27 @@ class Transformer extends Component {
         return e.preventDefault();
     };
 
-    handleStartDrag = (e) => {
-        this.setState({
-            dragStartPosition: {
-                x: e.pageX - this.state.position.x,
-                y: e.pageY - this.state.position.y
-            }
-        });
-
-        e.target.addEventListener('mousemove', this.onDrag);
-        e.target.addEventListener('mouseup', this.onDragStop);
-        e.target.addEventListener('mouseleave', this.onDragStop);
-        e.preventDefault();
-    };
-
     handleStartRotate = (e) => {
 
+        // get element boundaries
         const ref = ReactDOM.findDOMNode(this);
         const box = ref.getBoundingClientRect();
         const {top, left, height, width} = box;
 
+        // element center
         const center = {
             x: left + (width / 2),
             y: top + (height / 2)
         };
 
+        // distance from center
         const x = e.clientX - center.x;
         const y = e.clientY - center.y;
 
+        // save center and initial angle
         this.setState({
             center: center,
-            startAngle: Math.atan2(y,x)
+            initialAngle: Math.atan2(y,x)
         });
 
         e.target.addEventListener('mousemove', this.onRotate);
@@ -94,12 +86,17 @@ class Transformer extends Component {
     };
 
     onRotate = (e) => {
+
+        // get current pointer distance from center
         const x = e.clientX - this.state.center.x;
         const y = e.clientY - this.state.center.y;
-        const delta = Math.atan2(y, x);
 
+        // calculate angle delta from initial value
+        const delta = Math.atan2(y, x) - this.state.initialAngle;
+
+        // divided by 8 for smoother rotation
         this.setState({
-            rotation: this.state.rotation + (delta - this.state.startAngle)/8
+            rotation: this.state.rotation + delta / 8
         });
 
         e.preventDefault();
@@ -116,6 +113,22 @@ class Transformer extends Component {
         e.target.removeEventListener('mousemove', this.onRotate);
         e.target.removeEventListener('mouseup', this.onRotateStop);
         e.target.removeEventListener('mouseup', this.onRotateStop);
+        e.preventDefault();
+    };
+
+    handleStartDrag = (e) => {
+
+        // save distance from the current position to pointer
+        this.setState({
+            dragStartPosition: {
+                x: e.pageX - this.state.position.x,
+                y: e.pageY - this.state.position.y
+            }
+        });
+
+        e.target.addEventListener('mousemove', this.onDrag);
+        e.target.addEventListener('mouseup', this.onDragStop);
+        e.target.addEventListener('mouseleave', this.onDragStop);
         e.preventDefault();
     };
 
@@ -149,6 +162,7 @@ class Transformer extends Component {
             transform: `translate3d(${this.state.position.x}px, ${this.state.position.y}px, 0) rotateZ(${this.state.rotation}rad)`
         };
 
+        // apply transformations on child element
         return React.cloneElement(React.Children.only(this.props.children), {
             style: dragRotateStyle,
             onMouseDown: this.onMouseDown,
