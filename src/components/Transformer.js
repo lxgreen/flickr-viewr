@@ -31,27 +31,16 @@ class Transformer extends Component {
 
     onMouseDown = (e) => {
 
-        const BUTTONS = {
-            LEFT: 0,
-            RIGHT: 2
-        };
-
         // external mouse down
         this.props.onMouseDown(this.props.imageId);
 
-        // dispatch buttons: left for dragging, right for rotation
-        switch(e.button) {
-        case BUTTONS.LEFT:
-            this.handleStartDrag(e);
-        break;
+        // only LMB is processed
+        if (e.button) return e.preventDefault();
 
-        case BUTTONS.RIGHT:
-            this.handleStartRotate(e);
-        break;
+        // dispatch buttons: LMB for dragging, shift + LMB for rotation
+        if (e.shiftKey) this.handleStartRotate(e);
 
-        default:
-            break;
-        }
+        else this.handleStartDrag(e);
 
         return e.preventDefault();
     };
